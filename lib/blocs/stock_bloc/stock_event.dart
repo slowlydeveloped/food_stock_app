@@ -7,6 +7,8 @@ abstract class StockEvent extends Equatable {
   List<Object> get props => [];
 }
 
+class LoadStock extends StockEvent {}
+
 class LoadStockForRecipe extends StockEvent {
   final int recipeId;
 

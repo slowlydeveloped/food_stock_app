@@ -34,9 +34,6 @@ class _AddRecipePageState extends State<AddRecipePage> {
             listener: (context, state) {
               if (state is RecipeLoaded) {
                 showSnackBar(context, "Added Successfully");
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const StockScreen()),
-                );
               } else if (state is RecipeError) {
                 showSnackBar(context, state.message);
               }
@@ -79,10 +76,25 @@ class _AddRecipePageState extends State<AddRecipePage> {
                           };
                           BlocProvider.of<RecipeBloc>(context)
                               .add(AddRecipe(recipe));
+                          _nameController.clear();
+                          for (var controller in _ingredientNameControllers) {
+                            controller.clear();
+                          }
+                          for (var controller in _ingredientQuantityControllers) {
+                            controller.clear();
+                          }
                         }
                       },
                       child: const Text('Add Recipe'),
                     ),
+                    ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) => StockScreen()),
+                          );
+                        },
+                        child: Text("Stock"))
                   ],
                 ),
               ),

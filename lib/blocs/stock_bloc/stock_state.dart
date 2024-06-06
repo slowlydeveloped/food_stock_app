@@ -12,9 +12,15 @@ class StockInitial extends StockState {}
 class StockLoading extends StockState {}
 
 class StockLoaded extends StockState {
+  final List<Map<String, dynamic>> inwardStock;
+  final List<Map<String, dynamic>> outwardStock;
   final Map<String, double> remainingStock;
 
-  const StockLoaded(this.remainingStock);
+  const StockLoaded({
+    required this.inwardStock,
+    required this.outwardStock,
+    required this.remainingStock,
+  });
 }
 
 class StockError extends StockState {

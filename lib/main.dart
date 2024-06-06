@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
               OrderBloc(databaseHelper: DatabaseHelper.instance),
         ),
         BlocProvider(
-          create: (context) => StockBloc(DatabaseHelper.instance),
+          create: (context) => StockBloc(databaseHelper: DatabaseHelper.instance),
         )
       ],
       child: const MaterialApp(

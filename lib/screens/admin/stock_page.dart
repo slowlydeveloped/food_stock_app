@@ -11,28 +11,68 @@ class StockScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Stock Details')),
       body: BlocProvider(
-        create: (context) => StockBloc(DatabaseHelper.instance)..add(const LoadStockForRecipe(1)), // Example recipeId
+        create: (context) => StockBloc(databaseHelper: DatabaseHelper.instance)..add(LoadStock()),
         child: BlocBuilder<StockBloc, StockState>(
           builder: (context, state) {
             if (state is StockLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is StockLoaded) {
-              return ListView.builder(
-                itemCount: state.remainingStock.length,
-                itemBuilder: (context, index) {
-                  String ingredientName = state.remainingStock.keys.elementAt(index);
-                  double remainingQuantity = state.remainingStock[ingredientName]!;
-                  return ListTile(
-                    title: Text(ingredientName),
-                    subtitle: Text('Remaining: $remainingQuantity'),
-                  );
-                },
+              return ListView(
+                children: [
+                  _buildStockSection('Inward Stock', state.inwardStock),
+                  _buildStockSection('Outward Stock', state.outwardStock),
+                  _buildRemainingStockSection('Remaining Stock', state.remainingStock),
+                ],
               );
             } else if (state is StockError) {
               return Center(child: Text('Error: ${state.message}'));
             }
-            return Center(child: Text('Select a recipe to view stock'));
+            return Container();
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStockSection(String title, List<Map<String, dynamic>> stock) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Card(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            ...stock.map((entry) {
+              return ListTile(
+                title: Text('Unit: ${entry['unit']}'), // Display unit instead of ID
+                subtitle: Text('Quantity: ${entry['quantity']}'),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRemainingStockSection(String title, Map<String, double> remainingStock) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Card(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            ...remainingStock.entries.map((entry) {
+              return ListTile(
+                title: Text('Ingredient ID: ${entry.key}'),
+                subtitle: Text('Remaining Quantity: ${entry.value}'),
+              );
+            }).toList(),
+          ],
         ),
       ),
     );

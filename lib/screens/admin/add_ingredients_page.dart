@@ -61,6 +61,7 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                     },
                   ),
                   TextFormField(
+                    keyboardType: TextInputType.number,
                     controller: _unitController,
                     decoration: const InputDecoration(labelText: 'Unit'),
                     validator: (value) {
@@ -76,6 +77,7 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                       if (_formKey.currentState!.validate()) {
                         context.read<IngredientBloc>().add(AddIngredient(
                               name: _nameController.text,
+                              
                               price: double.parse(_priceController.text),
                               unit: _unitController.text,
                               vendorId: widget.vendorId,

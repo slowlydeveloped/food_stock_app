@@ -36,7 +36,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(recipe['recipe_name'] ?? ''.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),),
+                        Text(
+                          recipe['recipe_name'] ?? ''.toUpperCase(),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
                         Text('Quantity: ${recipe['quantity'] ?? ''}'),
                         Text('Total Price: ₹ ${recipe['total_price'] ?? ''}'),
                       ],
@@ -136,7 +140,10 @@ class _AddOrderPageState extends State<AddOrderPage> {
                         'total_price': double.parse(_totalPriceController.text),
                       };
                       context.read<OrderBloc>().add(AddOrder(newOrder));
-                      Navigator.pop(context);
+                      _recipeIdController.clear();
+                      _recipeNameController.clear();
+                      _quantityController.clear();
+                      _totalPriceController.clear();
                     }
                   },
                   child: const Text("Add Orders")),

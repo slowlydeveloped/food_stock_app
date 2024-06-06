@@ -9,17 +9,21 @@ part 'stock_state.dart';
 class StockBloc extends Bloc<StockEvent, StockState> {
   final DatabaseHelper databaseHelper;
 
-  StockBloc(this.databaseHelper) : super(StockInitial()) {
-    on<LoadStockForRecipe>(_onLoadStockForRecipe);
+  StockBloc({required this.databaseHelper}) : super(StockLoading()) {
+    on<LoadStock>(_onLoadStock);
   }
 
-  Future<void> _onLoadStockForRecipe(
-      LoadStockForRecipe event, Emitter<StockState> emit) async {
-    emit(StockLoading());
+  Future<void> _onLoadStock(LoadStock event, Emitter<StockState> emit) async {
     try {
-      final remainingStock =
-          await databaseHelper.calculateRemainingStock(event.recipeId);
-      emit(StockLoaded(remainingStock));
+      emit(StockLoading());
+      final inwardStock = await databaseHelper.getInwardStock();
+      final outwardStock = await databaseHelper.getOutwardStock();
+      final remainingStock = await databaseHelper.getRemainingStock();
+      emit(StockLoaded(
+        inwardStock: inwardStock,
+        outwardStock: outwardStock,
+        remainingStock: remainingStock,
+      ));
     } catch (e) {
       emit(StockError(e.toString()));
     }

@@ -19,7 +19,8 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     String path = join(await getDatabasesPath(), _databaseName);
-    return await openDatabase(path, version: _databaseVersion, onCreate: _onCreate);
+    return await openDatabase(path,
+        version: _databaseVersion, onCreate: _onCreate);
   }
 
   Future _onCreate(Database db, int version) async {
@@ -110,7 +111,8 @@ class DatabaseHelper {
   Future<int> updateIngredient(Map<String, dynamic> row) async {
     Database db = await instance.database;
     int id = row['id'];
-    return await db.update('ingredients', row, where: 'id = ?', whereArgs: [id]);
+    return await db
+        .update('ingredients', row, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int> deleteIngredient(int id) async {
@@ -125,7 +127,7 @@ class DatabaseHelper {
     // Insert recipe into recipes table
     int recipeId = await db.insert('recipes', {
       'name': recipe['name'],
-      'ingredients': jsonEncode(recipe['ingredients']), 
+      'ingredients': jsonEncode(recipe['ingredients']),
     });
     return recipeId;
   }
@@ -188,7 +190,8 @@ class DatabaseHelper {
     });
 
     // Update stock after the order
-    await updateStockAfterOrder(orderDetails['recipe_id'], orderDetails['quantity']);
+    await updateStockAfterOrder(
+        orderDetails['recipe_id'], orderDetails['quantity']);
 
     return orderId;
   }
@@ -253,7 +256,8 @@ class DatabaseHelper {
   }
 
   // Method to get ingredients and their quantities for a recipe
-  Future<List<Map<String, dynamic>>> getIngredientsForRecipe(int recipeId) async {
+  Future<List<Map<String, dynamic>>> getIngredientsForRecipe(
+      int recipeId) async {
     Database db = await instance.database;
 
     List<Map<String, dynamic>> recipes = await db.query(
@@ -277,7 +281,8 @@ class DatabaseHelper {
     Database db = await instance.database;
 
     // Get the ingredients and their quantities for the recipe
-    List<Map<String, dynamic>> recipeIngredients = await getIngredientsForRecipe(recipeId);
+    List<Map<String, dynamic>> recipeIngredients =
+        await getIngredientsForRecipe(recipeId);
 
     // Initialize a map to store the remaining stock of each ingredient
     Map<String, double> remainingStock = {};
@@ -313,12 +318,48 @@ class DatabaseHelper {
     return remainingStock;
   }
 
+  // Method to fetch inward stock
+  Future<List<Map<String, dynamic>>> getInwardStock() async {
+    Database db = await instance.database;
+    return await db.query('stock', where: 'type = ?', whereArgs: ['inward']);
+  }
+
+// Method to fetch outward stock
+  Future<List<Map<String, dynamic>>> getOutwardStock() async {
+    Database db = await instance.database;
+    return await db.query('stock', where: 'type = ?', whereArgs: ['outward']);
+  }
+
+// Method to calculate remaining stock
+  Future<Map<String, double>> getRemainingStock() async {
+    Database db = await instance.database;
+    final inwardStock = await getInwardStock();
+    final outwardStock = await getOutwardStock();
+
+    Map<String, double> remainingStock = {};
+
+    for (var entry in inwardStock) {
+      final name = entry['ingredient_id'].toString();
+      final quantity = entry['quantity'] as double;
+      remainingStock[name] = (remainingStock[name] ?? 0) + quantity;
+    }
+
+    for (var entry in outwardStock) {
+      final name = entry['ingredient_id'].toString();
+      final quantity = entry['quantity'] as double;
+      remainingStock[name] = (remainingStock[name] ?? 0) - quantity;
+    }
+
+    return remainingStock;
+  }
+
   // Method to update stock after placing an order
   Future<void> updateStockAfterOrder(int recipeId, int quantityOrdered) async {
     Database db = await instance.database;
 
     // Get the ingredients and their quantities for the recipe
-    List<Map<String, dynamic>> recipeIngredients = await getIngredientsForRecipe(recipeId);
+    List<Map<String, dynamic>> recipeIngredients =
+        await getIngredientsForRecipe(recipeId);
 
     // Update the stock for each ingredient used in the recipe
     for (var ingredient in recipeIngredients) {
