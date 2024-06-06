@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -18,67 +17,66 @@ class DatabaseHelper {
     return _database!;
   }
 
-  _initDatabase() async {
+  Future<Database> _initDatabase() async {
     String path = join(await getDatabasesPath(), _databaseName);
-    return await openDatabase(path,
-        version: _databaseVersion, onCreate: _onCreate);
+    return await openDatabase(path, version: _databaseVersion, onCreate: _onCreate);
   }
 
   Future _onCreate(Database db, int version) async {
     await db.execute('''
-    CREATE TABLE vendors (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      contact TEXT
-    )
-  ''');
+      CREATE TABLE vendors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        contact TEXT
+      )
+    ''');
 
     await db.execute('''
-    CREATE TABLE ingredients (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      price REAL NOT NULL,
-      unit TEXT NOT NULL,
-      vendor_id INTEGER,
-      FOREIGN KEY (vendor_id) REFERENCES vendors(id)
-    )
-  ''');
+      CREATE TABLE ingredients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        price REAL NOT NULL,
+        unit TEXT NOT NULL,
+        vendor_id INTEGER,
+        FOREIGN KEY (vendor_id) REFERENCES vendors(id)
+      )
+    ''');
 
     await db.execute('''
-    CREATE TABLE recipes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      ingredients TEXT NOT NULL -- JSON string of ingredients with quantities
-    )
-  ''');
+      CREATE TABLE recipes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        ingredients TEXT NOT NULL -- JSON string of ingredients with quantities
+      )
+    ''');
 
-   await db.execute(''' 
-    CREATE TABLE orders (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      recipe_id INTEGER NOT NULL,
-      recipe_name TEXT NOT NULL,
-      quantity INTEGER NOT NULL,
-      total_price REAL NOT NULL, -- New column for storing the total price
-      FOREIGN KEY (recipe_id) REFERENCES recipes(id)
-    )
-  ''');
-    
     await db.execute('''
-    CREATE TABLE stock (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      ingredient_id INTEGER NOT NULL,
-      quantity REAL NOT NULL,
-      type TEXT NOT NULL, -- 'inward' or 'outward'
-      date TEXT NOT NULL,
-      FOREIGN KEY (ingredient_id) REFERENCES ingredients(id)
-    )
-  ''');
+      CREATE TABLE orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        recipe_id INTEGER NOT NULL,
+        recipe_name TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        total_price REAL NOT NULL,
+        date TEXT NOT NULL,
+        FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE stock (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ingredient_id INTEGER NOT NULL,
+        quantity REAL NOT NULL,
+        type TEXT NOT NULL, -- 'inward' or 'outward'
+        date TEXT NOT NULL,
+        FOREIGN KEY (ingredient_id) REFERENCES ingredients(id)
+      )
+    ''');
   }
 
   // CRUD Operations for vendors
   Future<int> insertVendor(Map<String, dynamic> row) async {
     Database db = await instance.database;
-
     return await db.insert('vendors', row);
   }
 
@@ -112,8 +110,7 @@ class DatabaseHelper {
   Future<int> updateIngredient(Map<String, dynamic> row) async {
     Database db = await instance.database;
     int id = row['id'];
-    return await db
-        .update('ingredients', row, where: 'id = ?', whereArgs: [id]);
+    return await db.update('ingredients', row, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int> deleteIngredient(int id) async {
@@ -122,59 +119,33 @@ class DatabaseHelper {
   }
 
   // CRUD Operations for recipes
-
-  Future<int> updateRecipe(Map<String, dynamic> row) async {
+  Future<int> insertRecipe(Map<String, dynamic> recipe) async {
     Database db = await instance.database;
-    int id = row['id'];
-    return await db.update('recipes', row, where: 'id = ?', whereArgs: [id]);
+
+    // Insert recipe into recipes table
+    int recipeId = await db.insert('recipes', {
+      'name': recipe['name'],
+      'ingredients': jsonEncode(recipe['ingredients']), 
+    });
+    return recipeId;
   }
-
- Future<int> insertRecipe(Map<String, dynamic> recipe) async {
-  Database db = await instance.database;
-
-  // Insert recipe into recipes table
-  int recipeId = await db.insert('recipes', {
-    'name': recipe['name'],
-    'ingredients': jsonEncode(recipe['ingredients']), // Serialize ingredients list to JSON
-  });
-
-  // Insert order for the recipe
-  await db.insert('orders', {
-    'recipe_id': recipeId,
-    'recipe_name': recipe['name'], // Use recipe name as the product
-    'quantity': 1, // Assuming initial quantity is 1 for simplicity
-    'total_price': calculateTotalPrice(recipe['ingredients']), // Calculate total price
-    'date': DateTime.now().toString(), // Store the date of the order
-  });
-
-  return recipeId;
-}
-
-// Function to calculate total price based on ingredients
-double calculateTotalPrice(List<dynamic> ingredients) {
-  double totalPrice = 0;
-  for (var ingredient in ingredients) {
-    totalPrice += ingredient['price'] * ingredient['quantity'];
-  }
-  return totalPrice;
-}
-
-
-// Modify your queryAllRecipes method to also fetch ingredients for each recipe:
 
   Future<List<Map<String, dynamic>>> queryAllRecipes() async {
     Database db = await instance.database;
     List<Map<String, dynamic>> recipes = await db.query('recipes');
-
     for (var recipe in recipes) {
-      // Deserialize ingredients JSON string back into a list of maps
       List<dynamic> ingredientsJson = jsonDecode(recipe['ingredients']);
       List<Map<String, dynamic>> ingredients =
           List<Map<String, dynamic>>.from(ingredientsJson);
       recipe['ingredients'] = ingredients;
     }
-
     return recipes;
+  }
+
+  Future<int> updateRecipe(Map<String, dynamic> row) async {
+    Database db = await instance.database;
+    int id = row['id'];
+    return await db.update('recipes', row, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int> deleteRecipe(int id) async {
@@ -186,53 +157,58 @@ double calculateTotalPrice(List<dynamic> ingredients) {
     Database db = await instance.database;
 
     List<Map<String, dynamic>> recipesWithDetails = await db.rawQuery('''
-    SELECT 
-      recipes.id,
-      recipes.name AS recipe_name,
-      recipes.ingredients,
-      orders.quantity,
-      ingredients.price * orders.quantity AS total_price -- Calculate total price
-    FROM recipes
-    LEFT JOIN orders ON recipes.id = orders.recipe_id
-    LEFT JOIN ingredients ON orders.ingredient_id = ingredients.id
-  ''');
+      SELECT 
+        recipes.id,
+        recipes.name AS recipe_name,
+        recipes.ingredients
+      FROM recipes
+    ''');
 
+    for (var recipe in recipesWithDetails) {
+      // Deserialize ingredients JSON string back into a list of maps
+      List<dynamic> ingredientsJson = jsonDecode(recipe['ingredients']);
+      List<Map<String, dynamic>> ingredients =
+          List<Map<String, dynamic>>.from(ingredientsJson);
+      recipe['ingredients'] = ingredients;
+    }
     return recipesWithDetails;
   }
 
   // CRUD Operations for orders
-Future<int> insertOrder(Map<String, dynamic> orderDetails) async {
-  Database db = await instance.database;
+  Future<int> insertOrder(Map<String, dynamic> orderDetails) async {
+    Database db = await instance.database;
 
-  // Insert order into orders table
-  int orderId = await db.insert('orders', {
-    'recipe_id': orderDetails['recipe_id'],
-    'recipe_name': orderDetails['recipe_name'],
-    'quantity': orderDetails['quantity'],
-    'total_price': orderDetails['total_price'],
-    'date': DateTime.now().toString(), 
-  });
+    // Insert order into orders table
+    int orderId = await db.insert('orders', {
+      'recipe_id': orderDetails['recipe_id'],
+      'recipe_name': orderDetails['recipe_name'],
+      'quantity': orderDetails['quantity'],
+      'total_price': orderDetails['total_price'],
+      'date': DateTime.now().toString(),
+    });
 
-  return orderId;
-}
+    // Update stock after the order
+    await updateStockAfterOrder(orderDetails['recipe_id'], orderDetails['quantity']);
 
-Future<List<Map<String, dynamic>>> queryAllOrdersWithDetails() async {
-  Database db = await instance.database;
+    return orderId;
+  }
 
-  List<Map<String, dynamic>> ordersWithDetails = await db.rawQuery('''
-    SELECT 
-      orders.id,
-      orders.recipe_id,
-      orders.recipe_name,
-      orders.quantity,
-      orders.total_price,
-      recipes.ingredients -- You can include other details as needed
-    FROM orders
-    INNER JOIN recipes ON orders.recipe_id = recipes.id
-  ''');
+  Future<List<Map<String, dynamic>>> queryAllOrdersWithDetails() async {
+    Database db = await instance.database;
 
-  return ordersWithDetails;
-}
+    List<Map<String, dynamic>> ordersWithDetails = await db.rawQuery('''
+      SELECT 
+        orders.id,
+        orders.recipe_id,
+        orders.recipe_name,
+        orders.quantity,
+        orders.total_price,
+        orders.date
+      FROM orders
+    ''');
+
+    return ordersWithDetails;
+  }
 
   Future<int> updateOrder(Map<String, dynamic> row) async {
     Database db = await instance.database;
@@ -265,5 +241,97 @@ Future<List<Map<String, dynamic>>> queryAllOrdersWithDetails() async {
   Future<int> deleteStock(int id) async {
     Database db = await instance.database;
     return await db.delete('stock', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Helper method to calculate total price for a recipe
+  double calculateTotalPrice(List<dynamic> ingredients) {
+    double totalPrice = 0;
+    for (var ingredient in ingredients) {
+      totalPrice += ingredient['price'] * ingredient['quantity'];
+    }
+    return totalPrice;
+  }
+
+  // Method to get ingredients and their quantities for a recipe
+  Future<List<Map<String, dynamic>>> getIngredientsForRecipe(int recipeId) async {
+    Database db = await instance.database;
+
+    List<Map<String, dynamic>> recipes = await db.query(
+      'recipes',
+      where: 'id = ?',
+      whereArgs: [recipeId],
+    );
+
+    if (recipes.isEmpty) {
+      throw Exception('Recipe not found');
+    }
+
+    String ingredientsJson = recipes.first['ingredients'];
+    List<dynamic> ingredientsList = jsonDecode(ingredientsJson);
+
+    return List<Map<String, dynamic>>.from(ingredientsList);
+  }
+
+  // Method to calculate remaining stock for each ingredient used in a recipe
+  Future<Map<String, double>> calculateRemainingStock(int recipeId) async {
+    Database db = await instance.database;
+
+    // Get the ingredients and their quantities for the recipe
+    List<Map<String, dynamic>> recipeIngredients = await getIngredientsForRecipe(recipeId);
+
+    // Initialize a map to store the remaining stock of each ingredient
+    Map<String, double> remainingStock = {};
+
+    // Iterate over each ingredient used in the recipe
+    for (var ingredient in recipeIngredients) {
+      int ingredientId = ingredient['id'];
+      double quantityUsed = ingredient['quantity'];
+
+      // Get the total inward and outward stock for the ingredient
+      List<Map<String, dynamic>> stockData = await db.rawQuery('''
+        SELECT 
+          IFNULL(SUM(CASE WHEN type = 'inward' THEN quantity ELSE 0 END), 0) AS total_inward,
+          IFNULL(SUM(CASE WHEN type = 'outward' THEN quantity ELSE 0 END), 0) AS total_outward
+        FROM stock
+        WHERE ingredient_id = ?
+      ''', [ingredientId]);
+
+      if (stockData.isNotEmpty) {
+        double totalInward = stockData.first['total_inward'];
+        double totalOutward = stockData.first['total_outward'];
+
+        // Calculate the remaining stock
+        double currentStock = totalInward - totalOutward;
+
+        // Calculate the remaining stock after using the quantity for the recipe
+        double remaining = currentStock - quantityUsed;
+
+        remainingStock[ingredient['name']] = remaining;
+      }
+    }
+
+    return remainingStock;
+  }
+
+  // Method to update stock after placing an order
+  Future<void> updateStockAfterOrder(int recipeId, int quantityOrdered) async {
+    Database db = await instance.database;
+
+    // Get the ingredients and their quantities for the recipe
+    List<Map<String, dynamic>> recipeIngredients = await getIngredientsForRecipe(recipeId);
+
+    // Update the stock for each ingredient used in the recipe
+    for (var ingredient in recipeIngredients) {
+      int ingredientId = ingredient['id'];
+      double quantityUsed = ingredient['quantity'] * quantityOrdered;
+
+      // Insert an 'outward' stock transaction for the used quantity
+      await db.insert('stock', {
+        'ingredient_id': ingredientId,
+        'quantity': quantityUsed,
+        'type': 'outward',
+        'date': DateTime.now().toString(),
+      });
+    }
   }
 }

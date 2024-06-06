@@ -1,6 +1,5 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-
 import '../../data/database_helper.dart';
 
 part 'order_event.dart';
@@ -24,7 +23,6 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
       try {
         await databaseHelper.insertOrder(event.order);
         final orders = await databaseHelper.queryAllOrdersWithDetails();
-            
         emit(OrderLoaded(orders));
       } catch (e) {
         emit(OrderError('Failed to add order'));

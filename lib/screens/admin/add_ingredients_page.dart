@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task1/utils/global_methos.dart';
 
-import '../blocs/ingredients_bloc/ingredients_bloc.dart';
-import '../data/database_helper.dart';
+import '../../blocs/ingredients_bloc/ingredients_bloc.dart';
+import '../../data/database_helper.dart';
 
 class AddIngredientPage extends StatefulWidget {
   final int vendorId;
@@ -11,7 +11,7 @@ class AddIngredientPage extends StatefulWidget {
   const AddIngredientPage({super.key, required this.vendorId});
 
   @override
-  _AddIngredientPageState createState() => _AddIngredientPageState();
+  State<AddIngredientPage> createState() => _AddIngredientPageState();
 }
 
 class _AddIngredientPageState extends State<AddIngredientPage> {

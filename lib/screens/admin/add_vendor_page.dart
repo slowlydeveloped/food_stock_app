@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task1/utils/global_methos.dart';
 
-import '../blocs/vendor_bloc/vendor_bloc.dart';
-import '../blocs/vendor_bloc/vendor_event.dart';
-import '../blocs/vendor_bloc/vendor_state.dart';
-import '../data/database_helper.dart';
+import '../../blocs/vendor_bloc/vendor_bloc.dart';
+import '../../blocs/vendor_bloc/vendor_event.dart';
+import '../../blocs/vendor_bloc/vendor_state.dart';
+import '../../data/database_helper.dart';
 import 'view_vendors.dart';
 
 class AddVendorPage extends StatelessWidget {

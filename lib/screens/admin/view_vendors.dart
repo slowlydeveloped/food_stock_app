@@ -12,7 +12,7 @@ class VendorScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     BlocProvider.of<VendorBloc>(context).add(LoadVendors());
     return Scaffold(
-      appBar: AppBar(title: Text('Vendors')),
+      appBar: AppBar(title: const Text('Vendors')),
       body: Column(
         children: [
           ElevatedButton(
@@ -31,9 +31,7 @@ class VendorScreen extends StatelessWidget {
                     itemCount: state.vendors.length,
                     itemBuilder: (context, index) {
                       final vendor = state.vendors[index];
-                      return ListTile(
-                        title: Text(vendor['name']),
-                        subtitle: Text(vendor['contact']),
+                      return InkWell(
                         onTap: () {
                           Navigator.push(
                             context,
@@ -45,6 +43,18 @@ class VendorScreen extends StatelessWidget {
                             ),
                           );
                         },
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(vendor['name']),
+                                Text(vendor['contact']),
+                              ],
+                            ),
+                          ),
+                        ),
                       );
                     },
                   ),

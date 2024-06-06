@@ -7,23 +7,18 @@ abstract class StockState extends Equatable {
   List<Object> get props => [];
 }
 
+class StockInitial extends StockState {}
+
 class StockLoading extends StockState {}
 
 class StockLoaded extends StockState {
-  final List<Map<String, dynamic>> stock;
+  final Map<String, double> remainingStock;
 
-  const StockLoaded(this.stock);
-
-  @override
-  List<Object> get props => [stock];
+  const StockLoaded(this.remainingStock);
 }
 
 class StockError extends StockState {
   final String message;
 
   const StockError(this.message);
-
-  @override
-  List<Object> get props => [message];
 }
-

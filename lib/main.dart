@@ -4,7 +4,7 @@ import 'package:task1/blocs/order_bloc/order_bloc.dart';
 import 'package:task1/blocs/recipe_bloc/recipe_bloc.dart';
 import 'package:task1/blocs/ingredients_bloc/ingredients_bloc.dart';
 import 'package:task1/blocs/stock_bloc/stock_bloc.dart';
-import 'package:task1/screens/login_page.dart';
+import 'package:task1/screens/admin/main_page.dart';
 import 'data/database_helper.dart';
 import 'blocs/vendor_bloc/vendor_bloc.dart';
 
@@ -36,8 +36,7 @@ class MyApp extends StatelessWidget {
               OrderBloc(databaseHelper: DatabaseHelper.instance),
         ),
         BlocProvider(
-          create: (context) =>
-              StockBloc(databaseHelper: DatabaseHelper.instance),
+          create: (context) => StockBloc(DatabaseHelper.instance),
         )
       ],
       child: const MaterialApp(

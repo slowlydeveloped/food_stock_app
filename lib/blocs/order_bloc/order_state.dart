@@ -11,6 +11,7 @@ class OrderLoading extends OrderState {}
 
 class OrderLoaded extends OrderState {
   final List<Map<String, dynamic>> orders;
+
   const OrderLoaded(this.orders);
 
   @override

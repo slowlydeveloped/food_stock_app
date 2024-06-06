@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'admin_home_page.dart';
-import 'manager_home_page.dart';
+import 'package:task1/screens/admin/admin_login.dart';
+import '../manager/manager_home_page.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -17,7 +17,7 @@ class LoginPage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AdminHomePage()),
+                  MaterialPageRoute(builder: (context) => const AdminLogin()),
                 );
               },
               child: const Text('Admin Login'),
@@ -26,7 +26,7 @@ class LoginPage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ManagerHomePage()),
+                  MaterialPageRoute(builder: (context) =>const ManagerHomePage()),
                 );
               },
               child: const Text('Manager Login'),
